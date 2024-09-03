@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/tx 
+       https://www.springframework.org/schema/tx/spring-tx.xsd
+           "
+           profile="default">
+           <!-- przeniesione z dokumentacji
+  <context:annotation-config/>
+  <context:property-placeholder location="classpath:/com/acme/jdbc.properties"/>
+ -->
+ <!-- 
+ <context:component-scan base-package="pl.dom"></context:component-scan>
+  -->
+ 
+ <aop:aspectj-autoproxy/>
+
+<!--  
+ <tx:annotation-driven proxy-target-class="true"
+		transaction-manager="transactionManager" />
+ -->
+ 
+<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+	<property name="basenames">
+		<list>
+			<value>testResourceMessage</value>
+		</list>
+	</property>
+</bean>
+
+
+ <!-- 
+  <bean id="Pracownik" class="pl.dom.Pracownik" scope="prototype">
+    <property name="aid" value="012"></property>
+    <property name="aname" value="Jan Nowak"></property>
+  </bean>
+ -->
+
+<!--  -->
+<bean id="Mana" class="pl.dom.Mana" scope="singleton" init-method="" destroy-method="remove">
+    <property name="name" value="Kierownik"></property>
+    
+  </bean>
+
+<bean id="dziedziczenie" abstract="true"> 
+    <property name="name" value="Cos"></property>
+  </bean>
+  
+  <bean id="Dziecko" class="pl.dom.Dziecko" parent="dziedziczenie">
+  </bean>
+  
+  <bean class="pl.dom.Qualifer"> 
+  	<qualifier value="qual1"></qualifier>
+  	<property name="str" value="Cos"></property>
+  </bean>
+
+  <bean class="pl.dom.Qualifer"> 
+  	<qualifier value="qual2"></qualifier>
+  </bean>
+
+<!-- 
+<bean class="pl.dom.MojBeanPostProcessor"></bean>
+ -->
+
+<!-- 
+<bean id="Osoba" class="pl.dom.Osoba"> 
+<constructor-arg ref="Pracownik1" />
+</bean>
+ -->
+  <!-- more bean definitions go here -->
+  
+  <bean id="ELTests" class="pl.dom.ExpressionTests">
+  	<property name="random" value="#{ T(java.lang.Math).random() * 100.0 }"></property>
+  </bean>
+  
+  <aop:config>
+  	<aop:aspect id="myAspect"  ref="mojAspectXML">
+  		<aop:pointcut expression="execution(* pl.dom.Pracownik.*(..))" id="pracownikMethods"/>
+  		<aop:pointcut expression="execution(* pl.dom.Pracownik.getAname(..))" id="pracownikAname"/>
+  		<aop:pointcut expression="execution(public String pl.dom.Pracownik.getAname()) &amp;&amp; this(service)" id="pracownikNamethis"/>
+  		<aop:pointcut expression="execution(public String pl.dom.Pracownik.getAThrow())" id="pracownikThrow"/>
+  		<!--
+  		<aop:pointcut expression="execution(* pl.dom.Pracownik.*(..))" id="pracownikMethods"/>
+  		<aop:pointcut expression="execution(public String pl.dom.Pracownik.getAname()) and this(service)" id="pracownikName"/>
+  		-->
+  		
+  		<!--
+  		<aop:before method="callBefore" pointcut="execution(* pl.dom.Pracownik.*.*(..))"/>
+  		<aop:before method="callBefore" pointcut-ref="pracownikMethods"/>
+  		-->
+  		
+  		<aop:before method="callBefore" pointcut-ref="pracownikAname"/>
+  		<aop:before method="callBeforeAname" pointcut-ref="pracownikNamethis"/>
+		<aop:after-returning method="callAfterAname" pointcut-ref="pracownikAname" returning="returning"/>
+		<aop:after-throwing method="callAfterThrow" pointcut-ref="pracownikThrow"/>
+		<aop:after-throwing method="callAfterThrowWithError" pointcut-ref="pracownikThrow" throwing="err" />
+		<aop:after method="callAfterAname" pointcut-ref="pracownikAname" />
+		<aop:around method="callAroundAname" pointcut-ref="pracownikAname"  />
+		<aop:around method="callAroundAname" pointcut="execution(public String pl.dom.Pracownik.getAname(..))"/>
+		
+		
+		<aop:declare-parents types-matching="pl.dom.*" implement-interface="pl.dom.aop.UsageTrackerI" default-impl="pl.dom.aop.DefaultUsageTrackerImpl"/>
+		<aop:before method="beforeIntroduction" pointcut="execution(* pl.dom.Pracownik.getAname(..)) and this(usageTracker)"/>
+  		
+  	</aop:aspect>
+  </aop:config>
+  
+  <bean id="mojAspectXML" class="pl.dom.aop.MojAspectXml">
+  </bean>
+  <!--          ********************************     DB            ********************************** -->
+  
+ <tx:annotation-driven transaction-manager="transactionManager"/>
+  
+ 
+ <!-- 
+  
+  <bean id="fooService" class="pl.dom.model.OsobaService"/>
+  
+  <tx:advice id="txAdvice" transaction-manager="transactionManager" >
+  	<tx:attributes >
+  	<tx:method name="*" rollback-for="dontCare" no-rollback-for="doCare"  />
+  	</tx:attributes>
+  </tx:advice>
+   
+   <aop:config>
+   	<aop:pointcut id="fooServiceOperation" expression="execution(* pl.dom.model.*.*(..))"/>
+   	<aop:advisor advice-ref="txAdvice" pointcut-ref="fooServiceOperation"/>
+   </aop:config>
+ -->
+  
+ 	<bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource"  destroy-method="close">
+		<property name="driverClassName" value="org.postgresql.Driver"></property>
+		<property name="url" value="jdbc:postgresql://localhost:5432/spring" />
+ 		 <property name="username" value="postgres" />
+ 		 <property name="password" value="a" />
+	</bean>  
+
+<!-- 
+	<context:property-placeholder location="jdbc.properties"/>
+ -->
+
+ <!-- 
+  <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager" >
+ 	 <property name="dataSource" ref="dataSource"/>
+  </bean>
+
+  -->
+<!-- 
+
+ <bean id="entityManagerFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+ 	<property name="dataSource" ref="dataSource"></property>
+ 	<property name="hibernateProperties">
+ 		<value> hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect</value>
+ 	</property>
+ </bean>
+ -->
+ 
+</beans>
